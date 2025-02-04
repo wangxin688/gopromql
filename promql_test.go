@@ -1,4 +1,4 @@
-package gopromql
+package vtm
 
 import (
 	"fmt"
@@ -9,13 +9,13 @@ import (
 func TestBuild(t *testing.T) {
 	tests := []struct {
 		name     string
-		pb       *PromqlBuilder
+		pb       *PromQLBuilder
 		expected string
 		err      error
 	}{
 		{
 			name: "basic case",
-			pb: &PromqlBuilder{
+			pb: &PromQLBuilder{
 				metricName: "metric",
 			},
 			expected: "metric",
@@ -23,7 +23,7 @@ func TestBuild(t *testing.T) {
 		},
 		{
 			name: "with labels",
-			pb: &PromqlBuilder{
+			pb: &PromQLBuilder{
 				metricName: "metric",
 				labels: []Label{
 					{
@@ -43,7 +43,7 @@ func TestBuild(t *testing.T) {
 		},
 		{
 			name: "with window",
-			pb: &PromqlBuilder{
+			pb: &PromQLBuilder{
 				metricName: "metric",
 				window:     "5m",
 			},
@@ -52,7 +52,7 @@ func TestBuild(t *testing.T) {
 		},
 		{
 			name: "with compare",
-			pb: &PromqlBuilder{
+			pb: &PromQLBuilder{
 				metricName: "metric",
 				compOps: []Compare{
 					{
@@ -70,7 +70,7 @@ func TestBuild(t *testing.T) {
 		},
 		{
 			name: "with function",
-			pb: &PromqlBuilder{
+			pb: &PromQLBuilder{
 				metricName: "metric",
 				funcName:   "sum",
 			},
@@ -79,7 +79,7 @@ func TestBuild(t *testing.T) {
 		},
 		{
 			name: "with offset",
-			pb: &PromqlBuilder{
+			pb: &PromQLBuilder{
 				metricName: "metric",
 				offset:     "5m",
 			},
@@ -88,7 +88,7 @@ func TestBuild(t *testing.T) {
 		},
 		{
 			name: "with aggregation",
-			pb: &PromqlBuilder{
+			pb: &PromQLBuilder{
 				metricName: "metric",
 				agg: Aggregation{
 					Op:     "sum",
@@ -101,7 +101,7 @@ func TestBuild(t *testing.T) {
 		},
 		{
 			name: "with missing metric name",
-			pb:   &PromqlBuilder{},
+			pb:   &PromQLBuilder{},
 			err:  fmt.Errorf("metric name is required"),
 		},
 	}
