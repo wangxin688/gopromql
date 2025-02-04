@@ -1,4 +1,4 @@
-package gopromql
+package vtm
 
 import (
 	"fmt"
@@ -98,9 +98,9 @@ type BinaryOp struct {
 type Matcher string
 
 const (
-	EqualMacther    Matcher = "="
+	EqualMatcher    Matcher = "="
 	NotEqualMatcher Matcher = "!="
-	LikeMatcher     Matcher = "!="
+	LikeMatcher     Matcher = "=~"
 	NotLikeMatcher  Matcher = "!~"
 )
 
@@ -110,7 +110,7 @@ type Label struct {
 	Matcher
 }
 
-type PromqlBuilder struct {
+type PromQLBuilder struct {
 	metricName string
 	funcName   string
 	labels     []Label
@@ -120,92 +120,92 @@ type PromqlBuilder struct {
 	agg        Aggregation
 }
 
-func NewPromqlBuilder(metricName string) *PromqlBuilder {
-	return &PromqlBuilder{metricName: metricName}
+func NewPromQLBuilder(metricName string) *PromQLBuilder {
+	return &PromQLBuilder{metricName: metricName}
 }
 
 // see prometheus functions: https://prometheus.io/docs/prometheus/latest/querying/functions/
-// WithFuncName, basicQL will be format as "funcName(basicql)"
-func (pb *PromqlBuilder) WithFuncName(funcName string) *PromqlBuilder {
+// WithFuncName, basicQL will be format as "funcName(basicQL)"
+func (pb *PromQLBuilder) WithFuncName(funcName string) *PromQLBuilder {
 	pb.funcName = funcName
 	return pb
 }
 
 // WithLabels basicQL will be format as `{labelName1}={labelValue1},{labelName2}=~{labelValue2|labelValue2x}...{labelNameN}!={labelValueN}`
 // and append to metric name
-func (pb *PromqlBuilder) WithLabels(labels Label) *PromqlBuilder {
+func (pb *PromQLBuilder) WithLabels(labels Label) *PromQLBuilder {
 	pb.labels = append(pb.labels, labels)
 
 	return pb
 }
 
 // WithOffset basicQL will be format as "offset {offset}"
-func (pb *PromqlBuilder) WithOffset(offset string) *PromqlBuilder {
+func (pb *PromQLBuilder) WithOffset(offset string) *PromQLBuilder {
 	pb.offset = offset
 	return pb
 }
 
 // WithWindow basicQL will be format as "[window]"
-func (pb *PromqlBuilder) WithWindow(window string) *PromqlBuilder {
+func (pb *PromQLBuilder) WithWindow(window string) *PromQLBuilder {
 	pb.window = window
 	return pb
 }
 
 // WithComp basicQL will be format as "comp1 and comp2 and ... and compN"
 // when compare length > 1, combine with "and" as default
-func (pb *PromqlBuilder) WithComp(comp Compare) *PromqlBuilder {
+func (pb *PromQLBuilder) WithComp(comp Compare) *PromQLBuilder {
 	pb.compOps = append(pb.compOps, comp)
 	return pb
 }
 
-// WithAgg basicQL will be format as "agg(basicql) by/without (labelName1,labelName2,...,labelNameN)"
-func (pb *PromqlBuilder) WithAgg(agg Aggregation) *PromqlBuilder {
+// WithAgg basicQL will be format as "agg(basicQL) by/without (labelName1,labelName2,...,labelNameN)"
+func (pb *PromQLBuilder) WithAgg(agg Aggregation) *PromQLBuilder {
 	pb.agg = agg
 	return pb
 }
 
-// Build build basicql
-func (pb *PromqlBuilder) Build() (string, error) {
+// Build build basicQL
+func (pb *PromQLBuilder) Build() (string, error) {
 	if pb.metricName == "" {
 		return "", fmt.Errorf("metric name is required")
 	}
-	basicql := fmt.Sprintf(pb.metricName)
+	basicQL :=pb.metricName
 	if len(pb.labels) > 0 {
 		tmp := make([]string, len(pb.labels))
 		for index, label := range pb.labels {
 			tmp[index] = fmt.Sprintf(`%s%s"%s"`, label.Name, label.Matcher, label.Value)
 		}
-		basicql += fmt.Sprintf("{%s}", strings.Join(tmp, ","))
+		basicQL += fmt.Sprintf("{%s}", strings.Join(tmp, ","))
 	}
 
 	if pb.window != "" {
-		basicql += fmt.Sprintf("[%s]", pb.window)
+		basicQL += fmt.Sprintf("[%s]", pb.window)
 	}
 	if len(pb.compOps) > 0 {
 		tmp := make([]string, len(pb.compOps))
 		for index, comp := range pb.compOps {
-			tmp[index] = fmt.Sprintf("%s%s%.0f", basicql, comp.Op, comp.Value)
+			tmp[index] = fmt.Sprintf("%s%s%.0f", basicQL, comp.Op, comp.Value)
 		}
 		fmt.Println(tmp)
 		fmt.Println(len(tmp))
-		basicql = fmt.Sprintf(" %s", strings.Join(tmp, " and "))
+		basicQL = fmt.Sprintf(" %s", strings.Join(tmp, " and "))
 
 	}
 	if pb.funcName != "" {
-		basicql = fmt.Sprintf("%s(%s)", pb.funcName, basicql)
+		basicQL = fmt.Sprintf("%s(%s)", pb.funcName, basicQL)
 	}
 
 	if pb.offset != "" {
-		basicql += fmt.Sprintf(" offset %s", pb.offset)
+		basicQL += fmt.Sprintf(" offset %s", pb.offset)
 	}
 
 	if !reflect.DeepEqual(pb.agg, Aggregation{}) {
 		if pb.agg.Op != "" {
-			basicql = fmt.Sprintf("%s(%s)", pb.agg.Op, basicql)
+			basicQL = fmt.Sprintf("%s(%s)", pb.agg.Op, basicQL)
 		}
 		if pb.agg.AggWay != "" && pb.agg.By != nil {
-			basicql = fmt.Sprintf("%s %s (%s)", basicql, pb.agg.AggWay, strings.Join(pb.agg.By, ","))
+			basicQL = fmt.Sprintf("%s %s (%s)", basicQL, pb.agg.AggWay, strings.Join(pb.agg.By, ","))
 		}
 	}
-	return basicql, nil
+	return basicQL, nil
 }
